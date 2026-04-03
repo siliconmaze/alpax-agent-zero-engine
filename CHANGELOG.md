@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.0.2] — 2026-04-03
+
+### Added
+- **Setup guide** — `_docs/guides/setup.md` with full stack instructions (Agent Zero + Dashboard + Z.AI GLM 5.1)
+- **Z.AI / GLM 5.1 support** — `ZAI_API_KEY` in `.env.example` and `docker-compose.yml`
+
+### Fixed
+- Docker image corrected from `agentzero/agent-zero` to `agent0ai/agent-zero:latest`
+- Agent Zero port mapping fixed to `50080:80` (matching upstream docker-compose)
+- All services bound to `0.0.0.0` for network accessibility
+- Postgres remapped to port `5434` to avoid conflicts with existing instances
+- Next.js dev/prod server binds to `0.0.0.0` via `-H` flag
+
+### Changed
+- `docker-compose.yml` — correct image, ports, volume mount (`/a0`), Z.AI env passthrough
+- `bin/start` — binds to `0.0.0.0` in both dev and prod modes
+
 ## [0.0.1] — 2026-04-03
 
 ### Added

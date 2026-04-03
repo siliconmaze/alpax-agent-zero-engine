@@ -56,10 +56,10 @@ if [ "$MODE" = "prod" ]; then
   echo "  Agent Zero Engine — Production"
   echo "  http://localhost:$APP_PORT"
   echo ""
-  npm exec -- next start -p "$APP_PORT"
+  npm exec -- next start -p "$APP_PORT" -H 0.0.0.0
 else
   echo "  Agent Zero Engine — Development"
-  echo "  http://localhost:$APP_PORT"
+  echo "  http://0.0.0.0:$APP_PORT"
   echo ""
-  npm exec -- next dev -p "$APP_PORT"
+  npm exec -- next dev -p "$APP_PORT" -H 0.0.0.0
 fi
