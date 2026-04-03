@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# bin/start — Start the Agent Zero Engine dashboard
+# Usage: bash bin/start [dev|prod]
+#   dev  — Next.js dev server with hot reload (default)
+#   prod — Next.js production server (requires npm run build first)
+set -euo pipefail
+
+MODE="${1:-dev}"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$REPO"
+
+# Load environment files
+for envfile in .env .env.local; do
+  if [ -f "$envfile" ]; then
+    set -a
+    # shellcheck source=/dev/null
+    source "$envfile"
+    set +a
+  fi
+done
+
+APP_PORT="${APP_PORT:-4001}"
+AZ_URL="${AGENT_ZERO_API_URL:-http://localhost:50080}"
+
+# Stop anything already running on the app port
+bash "$REPO/bin/stop"
+
+# Ensure npm is available
+if ! command -v npm &>/dev/null; then
+  echo "  ✗ npm is required but was not found in PATH."
+  exit 1
+fi
+
+# Install deps if node_modules missing
+if [ ! -d node_modules ]; then
+  echo "  Installing dependencies..."
+  npm install --silent
+fi
+
+# Check Agent Zero connectivity (non-blocking)
+echo ""
+echo "  Agent Zero: $AZ_URL"
+if curl -sf --max-time 3 "$AZ_URL/api/health" >/dev/null 2>&1; then
+  echo "  Agent Zero: connected ✓"
+else
+  echo "  Agent Zero: not reachable (dashboard will use mock data)"
+fi
+
+echo ""
+if [ "$MODE" = "prod" ]; then
+  # Build if .next doesn't exist or is stale
+  if [ ! -d .next ]; then
+    echo "  Building for production..."
+    npm run build
+  fi
+  echo "  Agent Zero Engine — Production"
+  echo "  http://localhost:$APP_PORT"
+  echo ""
+  npm exec -- next start -p "$APP_PORT"
+else
+  echo "  Agent Zero Engine — Development"
+  echo "  http://localhost:$APP_PORT"
+  echo ""
+  npm exec -- next dev -p "$APP_PORT"
+fi

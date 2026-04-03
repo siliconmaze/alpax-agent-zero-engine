@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# bin/stop — Stop the Agent Zero Engine dashboard
+# Kills PM2 managed processes and anything on APP_PORT (default 4001).
+set -euo pipefail
+
+APP_PORT="${APP_PORT:-4001}"
+STOPPED=0
+
+# Stop PM2 process if present
+if command -v pm2 &>/dev/null; then
+  for PM2_NAME in agent-zero-engine az-engine; do
+    if pm2 describe "$PM2_NAME" &>/dev/null 2>&1; then
+      STATUS=$(pm2 describe "$PM2_NAME" 2>/dev/null | grep status | head -1 | awk '{print $4}')
+      if [ "$STATUS" = "online" ] || [ "$STATUS" = "errored" ]; then
+        pm2 stop "$PM2_NAME" >/dev/null 2>&1 || true
+        echo "  Stopped PM2: $PM2_NAME"
+        STOPPED=1
+      fi
+    fi
+  done
+fi
+
+# Kill anything on the port
+PIDS=$(lsof -ti:"$APP_PORT" 2>/dev/null || true)
+if [ -z "$PIDS" ] && command -v ss &>/dev/null; then
+  PIDS=$(ss -tlnp "sport = :$APP_PORT" 2>/dev/null | grep -oP 'pid=\K[0-9]+' | sort -u || true)
+fi
+
+if [ -n "$PIDS" ]; then
+  COUNT=$(echo "$PIDS" | wc -l | tr -d ' ')
+  echo "  Killing $COUNT process$([ "$COUNT" != "1" ] && echo "es") on port $APP_PORT:"
+  echo "$PIDS" | while read -r pid; do
+    CMD=$(ps -p "$pid" -o comm= 2>/dev/null || echo "unknown")
+    echo "    PID $pid ($CMD)"
+  done
+  echo "$PIDS" | xargs kill -9 2>/dev/null || true
+  STOPPED=1
+  sleep 1
+fi
+
+if [ "$STOPPED" = "1" ]; then
+  echo "  Agent Zero Engine stopped."
+else
+  echo "  Agent Zero Engine is not running (port $APP_PORT is free)"
+fi

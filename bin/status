@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# bin/status — Show Agent Zero Engine status and dependencies
+set -euo pipefail
+
+APP_PORT="${APP_PORT:-4001}"
+AZ_URL="${AGENT_ZERO_API_URL:-http://localhost:50080}"
+
+echo ""
+echo "  Agent Zero Engine — Status"
+echo "  ─────────────────────────"
+
+# Dashboard
+PIDS=$(lsof -ti:"$APP_PORT" 2>/dev/null || true)
+if [ -n "$PIDS" ]; then
+  echo "  Dashboard:    running on :$APP_PORT ✓"
+else
+  echo "  Dashboard:    not running ✗"
+fi
+
+# Agent Zero
+if curl -sf --max-time 3 "$AZ_URL/api/health" >/dev/null 2>&1; then
+  echo "  Agent Zero:   connected at $AZ_URL ✓"
+else
+  echo "  Agent Zero:   not reachable at $AZ_URL ✗"
+fi
+
+# PM2
+if command -v pm2 &>/dev/null; then
+  PM2_STATUS=$(pm2 describe agent-zero-engine 2>/dev/null | grep status | head -1 | awk '{print $4}' || echo "not managed")
+  echo "  PM2:          $PM2_STATUS"
+fi
+
+echo ""

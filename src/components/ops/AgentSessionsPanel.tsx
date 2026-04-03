@@ -73,7 +73,8 @@ export function AgentSessionsPanel() {
           message_count: 0,
           token_estimate: 0,
         };
-        setSessions([...displaySessions, newSess]);
+        // @ts-ignore - local AZSession type vs store AZSession type alignment
+        setSessions([...displaySessions, newSess as any]);
         setActiveSession(newSess);
         setShowNewForm(false);
         setNewProject("");

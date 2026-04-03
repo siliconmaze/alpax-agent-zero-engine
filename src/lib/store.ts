@@ -23,7 +23,7 @@ interface AppStore {
   updateSettings: (s: Partial<AZSettings>) => void;
 
   // UI State
-  activeView: "kanban" | "sessions" | "memory" | "settings";
+  activeView: "kanban" | "sessions" | "memory" | "settings" | "observability";
   setActiveView: (v: AppStore["activeView"]) => void;
   selectedCard: Card | null;
   setSelectedCard: (c: Card | null) => void;

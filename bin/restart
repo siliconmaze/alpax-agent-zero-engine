@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# bin/restart — Restart the Agent Zero Engine dashboard
+# Usage: bash bin/restart [dev|prod] [--foreground]
+set -euo pipefail
+
+MODE="${1:-dev}"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+RUN_IN_FOREGROUND="${2:-}"
+
+bash "$REPO/bin/stop"
+
+if [ "$MODE" = "prod" ] && [ "$RUN_IN_FOREGROUND" != "--foreground" ]; then
+  RUNTIME_HOME="${ALPAXPRIME_HOME:-$HOME/.alpaxprime}"
+  mkdir -p "$RUNTIME_HOME"
+  LOG_FILE="$RUNTIME_HOME/agent-zero-engine-prod.log"
+  nohup bash "$REPO/bin/start" "$MODE" >>"$LOG_FILE" 2>&1 &
+  PID="$!"
+  disown || true
+  echo "  Agent Zero Engine restarted in background (prod)."
+  echo "  PID: $PID"
+  echo "  Logs: tail -f $LOG_FILE"
+  exit 0
+fi
+
+exec bash "$REPO/bin/start" "$MODE"
