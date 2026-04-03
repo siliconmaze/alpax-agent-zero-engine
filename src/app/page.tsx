@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { LayoutDashboard, Bot, MemoryCard, Settings, Command, RefreshCw, ChevronRight, Terminal, Wifi, WifiOff } from "lucide-react";
 import { KanbanLane } from "@/components/ops/KanbanLane";
+import { AgentSessionsPanel } from "@/components/ops/AgentSessionsPanel";
 import { useStore } from "@/lib/store";
 import type { Card, Lane } from "@/lib/types";
 import { lanes, cn } from "@/lib/utils";
@@ -105,7 +106,7 @@ export default function Home() {
           </div>
         )}
         {activeView === "sessions" && (
-          <div className="flex items-center justify-center h-96 text-slate-500"><div className="text-center"><Terminal className="h-12 w-12 mx-auto mb-4 opacity-30" /><p className="text-lg font-medium">Sessions Panel</p><p className="text-sm mt-2">Connect to Agent Zero to see sessions</p></div></div>
+          <AgentSessionsPanel />
         )}
         {activeView === "memory" && (
           <div className="flex items-center justify-center h-96 text-slate-500"><div className="text-center"><MemoryCard className="h-12 w-12 mx-auto mb-4 opacity-30" /><p className="text-lg font-medium">Memory Dashboard</p><p className="text-sm mt-2">Coming soon</p></div></div>
