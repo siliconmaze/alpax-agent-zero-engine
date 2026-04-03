@@ -1,7 +1,0 @@
-{
-  "/_not-found/page": "/_not-found",
-  "/api/agent-zero/health/route": "/api/agent-zero/health",
-  "/api/agent-zero/message/route": "/api/agent-zero/message",
-  "/api/agent-zero/projects/route": "/api/agent-zero/projects",
-  "/page": "/"
-}
