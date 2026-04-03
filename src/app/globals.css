@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-primary: #020617;
+    --bg-secondary: #0f172a;
+    --bg-tertiary: #1e293b;
+    --border-color: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-cyan: #22d3ee;
+    --accent-emerald: #10b981;
+    --accent-amber: #f59e0b;
+    --accent-rose: #f43f5e;
+    --accent-violet: #8b5cf6;
+  }
+
+  * {
+    @apply border-slate-700;
+  }
+
+  body {
+    @apply bg-slate-950 text-slate-100 antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .card-glow-error {
+    @apply animate-pulse;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+  }
+
+  .badge-p0 {
+    @apply border-rose-500 bg-rose-950/20;
+  }
+
+  .badge-p1 {
+    @apply border-amber-500 bg-amber-950/20;
+  }
+
+  .badge-p2 {
+    @apply border-slate-500 bg-slate-900/40;
+  }
+
+  .lane-now {
+    @apply border-emerald-600 bg-emerald-950/10;
+  }
+
+  .lane-backlog {
+    @apply border-slate-600 bg-slate-900/20;
+  }
+
+  .lane-done {
+    @apply border-violet-600 bg-violet-950/10;
+  }
+
+  .lane-halted {
+    @apply border-amber-600 bg-amber-950/10;
+  }
+
+  .lane-recurring {
+    @apply border-rose-600 bg-rose-950/10;
+  }
+
+  .lane-next {
+    @apply border-cyan-600 bg-cyan-950/10;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #334155 transparent;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
