@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.2.0] — 2026-04-03
+## [0.0.1] — 2026-04-03
 
 ### Added
 - **Bin scripts** — `bin/start`, `bin/stop`, `bin/restart`, `bin/status` following openclaw-ops-engine patterns
@@ -20,7 +20,7 @@
 - `package.json` scripts now use `bin/start` wrapper for `dev` and `start`
 - Added `stop`, `restart`, `status` npm scripts
 
-## [0.1.0] — 2026-03-31
+## [0.0.0] — 2026-03-31
 
 ### Added
 - Initial Next.js 15 dashboard scaffold on port 4001
