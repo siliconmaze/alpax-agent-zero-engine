@@ -1,102 +1,140 @@
-# Alpax Agent Zero Dashboard Engine
+# Alpax Agent Zero Engine
 
-Agent Zero AI agent dashboard — Kanban board, observability, memory explorer, and command palette.
-
-**Design:** Same look-and-feel as openclaw-ops-engine (dark Tailwind theme, Kanban lanes, activity icons, priority badges).
-
----
-
-## Quick Start
-
-```bash
-# 1. Install dependencies
-npm install
-
-# 2. Configure Agent Zero
-cp .env.example .env.local
-# Edit .env.local with your Agent Zero API URL and key
-
-# 3. Start Agent Zero (Docker)
-cd agent-zero/docker/run && docker-compose up -d
-
-# 4. Start dashboard
-npm run dev
-# Dashboard → http://localhost:4001
-```
-
----
+Production deployment stack for the Alpax Agent Zero platform — dashboard, agent runtime, session state, and observability data.
 
 ## Architecture
 
 ```
-alpax-agent-zero-engine/
-├── agent-zero/          ← Agent Zero Python framework (submodule)
-├── src/
-│   ├── app/
-│   │   ├── page.tsx          ← Main dashboard (Kanban + panels)
-│   │   ├── api/agent-zero/  ← API routes (health, message, projects)
-│   │   └── settings/         ← Settings panel
-│   ├── components/ops/
-│   │   ├── KanbanLane.tsx    ← Lane column (Now/Backlog/Done/etc.)
-│   │   └── CardItem.tsx      ← Card display (priority, model, AZ context)
-│   └── lib/
-│       ├── agent-zero-client.ts  ← Typed API client
-│       ├── store.ts          ← Zustand state
-│       ├── types.ts         ← TypeScript types
-│       └── utils.ts         ← lane/priority colors, helpers
-├── _docs/
-│   ├── agent-zero-api-research.md  ← Full API documentation
-│   └── adr/                      ← Architecture Decision Records
-└── agent-zero/              ← Agent Zero framework (from agent0ai/agent-zero)
+┌──────────────────────────────────────────────────────┐
+│                   alpax-agent-net                     │
+│                                                       │
+│  ┌─────────────┐   ┌──────────────┐                  │
+│  │  dashboard  │──▶│   postgres   │                  │
+│  │ (Next.js    │   │  (observability)                │
+│  │  :4001)     │   └──────────────┘                  │
+│  └──────┬──────┘                                     │
+│         │                                             │
+│  ┌──────▼──────┐   ┌──────────────┐                  │
+│  │ agent-zero  │◀──│    redis     │                  │
+│  │  (:5000)    │   │ (sessions)   │                  │
+│  └─────────────┘   └──────────────┘                  │
+└──────────────────────────────────────────────────────┘
 ```
 
-## Features
+**Services**
+| Service | Image | Ports | Purpose |
+|---------|-------|-------|---------|
+| `dashboard` | Next.js (custom) | 4001 | Web UI + REST API |
+| `agent-zero` | agentzero/agent-zero:latest | 5000 | AI agent runtime |
+| `redis` | redis:7-alpine | 6379 | Session/state store |
+| `postgres` | postgres:16-alpine | 5432 | Observability data |
 
-- **Kanban Board** — Cards mapped to Agent Zero sessions (context_id)
-- **Sessions Panel** — Live Agent Zero session management
-- **Observability** — Token counter, cost estimation, latency tracking
-- **Memory Dashboard** — Per-project memory explorer (future)
-- **Command Palette** — Cmd+K for quick actions
-- **Settings** — API URL, key, model config, notifications
-
-## Tech Stack
-
-- Next.js 15 (App Router)
-- TypeScript
-- Tailwind CSS (dark slate theme)
-- lucide-react icons
-- Zustand (state)
-- React Query (server state)
-
-## Agent Zero API
-
-Agent Zero exposes a full REST API. Dashboard connects via `src/lib/agent-zero-client.ts`.
-
-Key endpoints:
-- `POST /api/message` — Send message, create/continue session
-- `POST /api/projects` — Manage projects
-- `GET /api/health` — Health check
-- `POST /api/history_get` — Chat history
-
-See `_docs/agent-zero-api-research.md` for full API documentation.
-
-## Ports
-
-| Service | Port |
-|---------|------|
-| Dashboard | 4001 |
-| Agent Zero (Docker) | 50080 |
-| Agent Zero (direct) | 80 |
-
-## Development
+## Quick Start
 
 ```bash
-npm run dev        # Dev server on 4001
-npm run build      # Production build
-npm run lint       # ESLint
-npm run test       # Playwright E2E tests
+# 1. Clone the repo
+git clone https://github.com/siliconmaze/alpax-agent-zero-engine.git
+cd alpax-agent-zero-engine
+
+# 2. Configure environment
+cp .env.example .env.local
+# Edit .env.local — set AGENT_ZERO_API_KEY, POSTGRES_PASSWORD, etc.
+
+# 3. Start the stack
+docker compose up -d
+
+# Verify
+curl http://localhost:4001/api/health
 ```
+
+## API Reference
+
+### Health
+```
+GET /api/health
+→ 200 { status: "ok", uptime: <seconds>, timestamp: <ISO> }
+```
+
+### Agent Zero Proxy
+```
+POST /api/agent/execute
+Body: { prompt: string, context?: object }
+→ { result: string, sessionId: string }
+
+GET  /api/agent/sessions
+→ { sessions: Session[] }
+
+DELETE /api/agent/sessions/:id
+→ 204 No Content
+```
+
+### Sessions (Redis-backed)
+```
+POST /api/sessions
+Body: { userId: string, metadata?: object }
+→ { sessionId: string, createdAt: string }
+
+GET /api/sessions/:sessionId
+→ { sessionId, userId, data: object, createdAt, updatedAt }
+
+PATCH /api/sessions/:sessionId
+Body: { data: object }
+→ { sessionId, updatedAt: string }
+```
+
+## Production Deployment (PM2)
+
+```bash
+# Install dependencies
+npm ci
+
+# Copy env
+cp .env.example .env.local
+
+# Build
+npm run build
+
+# Start with PM2 (2 instances, cluster mode)
+pm2 start ecosystem.config.cjs --env production
+
+# Logs
+pm2 logs alpax-agent-zero-dashboard
+
+# Reload after update
+pm2 reload alpax-agent-zero-dashboard
+```
+
+## Troubleshooting
+
+**Dashboard returns 502**
+→ Check `agent-zero` is healthy: `docker compose ps agent-zero`
+
+**Redis connection refused**
+→ Wait for Redis health check: `docker compose up -d redis` then `docker compose up -d`
+
+**Postgres auth failed**
+→ Set matching `POSTGRES_PASSWORD` in `.env.local` and `docker-compose.yml`
+
+**Build fails on M1/M2 Mac**
+→ Add `platform: linux/amd64` to the `dashboard` build section in `docker-compose.yml`
+
+**Increase agent-zero timeout**
+→ Set `AGENT_ZERO_TIMEOUT=120` in the `agent-zero` service environment
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `AGENT_ZERO_API_URL` | `http://agent-zero:5000` | Agent Zero endpoint |
+| `AGENT_ZERO_API_KEY` | *(empty)* | API key for agent auth |
+| `DATABASE_URL` | `postgresql://...` | Postgres connection string |
+| `POSTGRES_PASSWORD` | `changeme` | Postgres password |
+| `REDIS_URL` | `redis://redis:6379` | Redis connection URL |
+| `PORT` | `4001` | Dashboard port |
+| `NODE_ENV` | `production` | Runtime environment |
+| `TELEGRAM_BOT_TOKEN` | *(empty)* | Telegram bot token |
+| `TELEGRAM_WEBHOOK_URL` | *(empty)* | Telegram webhook URL |
 
 ## License
 
-MIT — Steve's agent infrastructure
+MIT — siliconmaze
